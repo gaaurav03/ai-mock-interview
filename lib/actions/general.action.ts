@@ -102,22 +102,25 @@ export async function getLatestInterviews(
 ): Promise<Interview[]> {
   const { userId, limit = 20 } = params;
 
-  let queryRef = db
+  const queryRef = db
     .collection("interviews")
+    .where("finalized", "==", true)
     .orderBy("createdAt", "desc")
-    .where("finalized", "==", true);
+    .limit(limit + 5); // small buffer
 
-  // ✅ ONLY apply this filter if userId exists
-  if (userId) {
-    queryRef = queryRef.where("userId", "!=", userId);
-  }
+  const snapshot = await queryRef.get();
 
-  const interviews = await queryRef.limit(limit).get();
-
-  return interviews.docs.map((doc) => ({
+  let interviews = snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as Interview[];
+
+  // ✅ Exclude user's own interviews safely (NO Firestore inequality)
+  if (userId) {
+    interviews = interviews.filter((interview) => interview.userId !== userId);
+  }
+
+  return interviews.slice(0, limit);
 }
 
 export async function getInterviewsByUserId(

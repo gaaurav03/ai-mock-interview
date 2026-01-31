@@ -23,7 +23,7 @@ async function Home() {
     ]);
   } else {
     // user not logged in → only show public interviews
-    allInterview = await getLatestInterviews({});
+    allInterview = await {};
   }
 
   const hasPastInterviews = userInterviews.length > 0;
