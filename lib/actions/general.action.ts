@@ -92,16 +92,20 @@ export async function getFeedbackByInterviewId(
 
 export async function getLatestInterviews(
   params: GetLatestInterviewsParams
-): Promise<Interview[] | null> {
+): Promise<Interview[]> {
   const { userId, limit = 20 } = params;
 
-  const interviews = await db
+  let queryRef = db
     .collection("interviews")
     .orderBy("createdAt", "desc")
-    .where("finalized", "==", true)
-    .where("userId", "!=", userId)
-    .limit(limit)
-    .get();
+    .where("finalized", "==", true);
+
+  // ✅ ONLY apply this filter if userId exists
+  if (userId) {
+    queryRef = queryRef.where("userId", "!=", userId);
+  }
+
+  const interviews = await queryRef.limit(limit).get();
 
   return interviews.docs.map((doc) => ({
     id: doc.id,
