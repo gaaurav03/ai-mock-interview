@@ -13,13 +13,21 @@ import {
 async function Home() {
   const user = await getCurrentUser();
 
-  const [userInterviews, allInterview] = await Promise.all([
-    getInterviewsByUserId(user?.id!),
-    getLatestInterviews({ userId: user?.id! }),
-  ]);
+  let userInterviews = [];
+  let allInterview = [];
 
-  const hasPastInterviews = userInterviews?.length! > 0;
-  const hasUpcomingInterviews = allInterview?.length! > 0;
+  if (user?.id) {
+    [userInterviews, allInterview] = await Promise.all([
+      getInterviewsByUserId(user.id),
+      getLatestInterviews({ userId: user.id }),
+    ]);
+  } else {
+    // user not logged in → only show public interviews
+    allInterview = await getLatestInterviews({});
+  }
+
+  const hasPastInterviews = userInterviews.length > 0;
+  const hasUpcomingInterviews = allInterview.length > 0;
 
   return (
     <>
@@ -49,7 +57,7 @@ async function Home() {
 
         <div className="interviews-section">
           {hasPastInterviews ? (
-            userInterviews?.map((interview) => (
+            userInterviews.map((interview) => (
               <InterviewCard
                 key={interview.id}
                 userId={user?.id}
@@ -71,7 +79,7 @@ async function Home() {
 
         <div className="interviews-section">
           {hasUpcomingInterviews ? (
-            allInterview?.map((interview) => (
+            allInterview.map((interview) => (
               <InterviewCard
                 key={interview.id}
                 userId={user?.id}
