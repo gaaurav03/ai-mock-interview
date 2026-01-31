@@ -8,7 +8,14 @@ import { feedbackSchema } from "@/constants";
 
 export async function createFeedback(params: CreateFeedbackParams) {
   const { interviewId, userId, transcript, feedbackId } = params;
-
+  if (!interviewId || !userId || !transcript?.length) {
+    console.error("❌ Invalid feedback payload", {
+      interviewId,
+      userId,
+      transcriptLength: transcript?.length,
+    });
+    return { success: false };
+  }
   try {
     const formattedTranscript = transcript
       .map(
@@ -115,7 +122,9 @@ export async function getLatestInterviews(
 
 export async function getInterviewsByUserId(
   userId: string
-): Promise<Interview[] | null> {
+): Promise<Interview[]> {
+  if (!userId) return [];
+
   const interviews = await db
     .collection("interviews")
     .where("userId", "==", userId)
